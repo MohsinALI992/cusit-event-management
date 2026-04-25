@@ -1,9 +1,11 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
+import { useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
 
 // Pages
 import Login from "@/pages/login";
@@ -19,12 +21,37 @@ import Reports from "@/pages/reports";
 
 const queryClient = new QueryClient();
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const [, setLocation] = useLocation();
+  const { data: user, isLoading, error } = useGetCurrentUser({
+    query: { queryKey: getGetCurrentUserQueryKey(), retry: false },
+  });
+
+  useEffect(() => {
+    if (!isLoading && (!user || error)) {
+      setLocation("/login");
+    }
+  }, [user, isLoading, error, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+  if (!user) return null;
+  return <Layout>{children}</Layout>;
+}
+
 function ProtectedRoute({ component: Component, ...rest }: any) {
   return (
     <Route {...rest}>
-      <Layout>
-        <Component />
-      </Layout>
+      {(params: Record<string, string>) => (
+        <AuthGate>
+          <Component params={params} />
+        </AuthGate>
+      )}
     </Route>
   );
 }
