@@ -1,0 +1,14 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "06KKigQ21l-wKKFszcJEH"
+uri = "file://artifacts/cusit-events/public/images/login-hero.png"
+type = "image"
+title = "academic campus login hero"
+
+[[generated]]
+id = "76KSFAnwAt1pSs3O9ZHCQ"
+uri = "file://artifacts/cusit-events/public/images/empty-state.png"
+type = "image"
+title = "empty state illustration"

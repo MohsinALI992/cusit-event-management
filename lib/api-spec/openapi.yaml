@@ -3,34 +3,658 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CUSIT University Event Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: users
+  - name: auth
+  - name: events
+  - name: registrations
+  - name: attendance
+  - name: certificates
+  - name: notifications
+  - name: feedback
+  - name: reports
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
           content:
             application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+
+  /me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current logged-in user (mock session)
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+  /auth/login:
+    post:
+      operationId: loginAs
+      tags: [auth]
+      summary: Login as a seeded user (demo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "204": { description: Logged out }
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      parameters:
+        - { name: role, in: query, schema: { $ref: "#/components/schemas/UserRole" } }
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List events with filters
+      parameters:
+        - { name: status, in: query, schema: { $ref: "#/components/schemas/EventStatus" } }
+        - { name: category, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: organizerId, in: query, schema: { type: integer } }
+        - { name: upcoming, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Event" }
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Propose a new event (pending approval)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventCreatePayload" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventDetail" }
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventUpdatePayload" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+  /events/{id}/approve:
+    post:
+      operationId: approveEvent
+      tags: [events]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventApprovalPayload" }
+      responses:
+        "200":
+          description: Approved or rejected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+
+  /events/{id}/registrations:
+    get:
+      operationId: listEventRegistrations
+      tags: [registrations]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Registration" }
+  /events/{id}/register:
+    post:
+      operationId: registerForEvent
+      tags: [registrations]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Registration" }
+  /events/{id}/unregister:
+    post:
+      operationId: unregisterFromEvent
+      tags: [registrations]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Unregistered }
+
+  /events/{id}/attendance:
+    get:
+      operationId: listEventAttendance
+      tags: [attendance]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Attendance roster
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttendanceRow" }
+    post:
+      operationId: markAttendance
+      tags: [attendance]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AttendanceMarkPayload" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttendanceRow" }
+
+  /events/{id}/certificates/issue:
+    post:
+      operationId: issueCertificates
+      tags: [certificates]
+      summary: Issue certificates to all attended students
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Certificates issued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IssueCertificatesResult" }
+
+  /me/registrations:
+    get:
+      operationId: listMyRegistrations
+      tags: [registrations]
+      responses:
+        "200":
+          description: My registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RegistrationWithEvent" }
+  /me/certificates:
+    get:
+      operationId: listMyCertificates
+      tags: [certificates]
+      responses:
+        "200":
+          description: My certificates
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CertificateWithEvent" }
+  /me/notifications:
+    get:
+      operationId: listMyNotifications
+      tags: [notifications]
+      responses:
+        "200":
+          description: My notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Notification" }
+  /me/notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Marked }
+
+  /events/{id}/feedback:
+    get:
+      operationId: listEventFeedback
+      tags: [feedback]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Feedback
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Feedback" }
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeedbackPayload" }
+      responses:
+        "201":
+          description: Submitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Feedback" }
+
+  /reports/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [reports]
+      summary: Top-level dashboard summary stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardStats" }
+  /reports/events-by-category:
+    get:
+      operationId: getEventsByCategory
+      tags: [reports]
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CategoryCount" }
+  /reports/registrations-trend:
+    get:
+      operationId: getRegistrationsTrend
+      tags: [reports]
+      summary: Registrations grouped by day for the last N days
+      parameters:
+        - { name: days, in: query, schema: { type: integer, default: 14 } }
+      responses:
+        "200":
+          description: Trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TrendPoint" }
+  /reports/top-events:
+    get:
+      operationId: getTopEvents
+      tags: [reports]
+      summary: Top events by registrations
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 5 } }
+      responses:
+        "200":
+          description: Top events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopEvent" }
+  /reports/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [reports]
+      summary: Recent activity feed across the system
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 10 } }
+      responses:
+        "200":
+          description: Activity items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ActivityItem" }
+  /reports/event/{id}:
+    get:
+      operationId: getEventReport
+      tags: [reports]
+      summary: Per-event report (registrations, attendance, certs, feedback avg)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Event report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventReport" }
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
 
+    UserRole:
+      type: string
+      enum: [student, faculty, coordinator, society_head, admin]
+    EventStatus:
+      type: string
+      enum: [pending, approved, rejected, completed, cancelled]
+    EventCategory:
+      type: string
+      enum: [seminar, workshop, competition, sports, society, cultural, technical]
+    AttendanceStatus:
+      type: string
+      enum: [absent, present, late]
+
+    User:
+      type: object
+      required: [id, name, email, role]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+        department: { type: string, nullable: true }
+        registrationNumber: { type: string, nullable: true }
+        avatarUrl: { type: string, nullable: true }
+
+    LoginRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: integer }
+
+    Event:
+      type: object
+      required: [id, title, description, category, status, organizerId, organizerName, startsAt, endsAt, venue, capacity, registrationCount]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        category: { $ref: "#/components/schemas/EventCategory" }
+        status: { $ref: "#/components/schemas/EventStatus" }
+        organizerId: { type: integer }
+        organizerName: { type: string }
+        organizerRole: { $ref: "#/components/schemas/UserRole" }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        venue: { type: string }
+        capacity: { type: integer }
+        registrationCount: { type: integer }
+        bannerUrl: { type: string, nullable: true }
+        rejectionReason: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    EventDetail:
+      allOf:
+        - $ref: "#/components/schemas/Event"
+        - type: object
+          properties:
+            isRegistered: { type: boolean }
+            myAttendanceStatus: { $ref: "#/components/schemas/AttendanceStatus" }
+            hasCertificate: { type: boolean }
+
+    EventCreatePayload:
+      type: object
+      required: [title, description, category, startsAt, endsAt, venue, capacity]
+      properties:
+        title: { type: string, minLength: 3 }
+        description: { type: string, minLength: 10 }
+        category: { $ref: "#/components/schemas/EventCategory" }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        venue: { type: string }
+        capacity: { type: integer, minimum: 1 }
+        bannerUrl: { type: string, nullable: true }
+    EventUpdatePayload:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        category: { $ref: "#/components/schemas/EventCategory" }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        venue: { type: string }
+        capacity: { type: integer }
+        bannerUrl: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/EventStatus" }
+    EventApprovalPayload:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approve, reject] }
+        rejectionReason: { type: string, nullable: true }
+
+    Registration:
+      type: object
+      required: [id, eventId, userId, userName, registeredAt]
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        userId: { type: integer }
+        userName: { type: string }
+        userEmail: { type: string }
+        userDepartment: { type: string, nullable: true }
+        registeredAt: { type: string, format: date-time }
+    RegistrationWithEvent:
+      type: object
+      required: [id, event, registeredAt]
+      properties:
+        id: { type: integer }
+        event: { $ref: "#/components/schemas/Event" }
+        registeredAt: { type: string, format: date-time }
+        attendanceStatus: { $ref: "#/components/schemas/AttendanceStatus" }
+        hasCertificate: { type: boolean }
+
+    AttendanceRow:
+      type: object
+      required: [registrationId, userId, userName, status]
+      properties:
+        registrationId: { type: integer }
+        userId: { type: integer }
+        userName: { type: string }
+        userEmail: { type: string }
+        userDepartment: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        markedAt: { type: string, format: date-time, nullable: true }
+    AttendanceMarkPayload:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            type: object
+            required: [registrationId, status]
+            properties:
+              registrationId: { type: integer }
+              status: { $ref: "#/components/schemas/AttendanceStatus" }
+
+    IssueCertificatesResult:
+      type: object
+      required: [issuedCount]
+      properties:
+        issuedCount: { type: integer }
+    Certificate:
+      type: object
+      required: [id, eventId, userId, code, issuedAt]
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        userId: { type: integer }
+        code: { type: string }
+        issuedAt: { type: string, format: date-time }
+    CertificateWithEvent:
+      type: object
+      required: [id, code, issuedAt, event]
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        issuedAt: { type: string, format: date-time }
+        event: { $ref: "#/components/schemas/Event" }
+
+    Notification:
+      type: object
+      required: [id, userId, title, body, createdAt, isRead]
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        title: { type: string }
+        body: { type: string }
+        eventId: { type: integer, nullable: true }
+        createdAt: { type: string, format: date-time }
+        isRead: { type: boolean }
+
+    Feedback:
+      type: object
+      required: [id, eventId, userId, userName, rating, createdAt]
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        userId: { type: integer }
+        userName: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    FeedbackPayload:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, nullable: true }
+
+    DashboardStats:
+      type: object
+      required: [totalEvents, upcomingEvents, pendingApprovals, totalRegistrations, totalCertificates, activeUsers]
+      properties:
+        totalEvents: { type: integer }
+        upcomingEvents: { type: integer }
+        pendingApprovals: { type: integer }
+        totalRegistrations: { type: integer }
+        totalCertificates: { type: integer }
+        activeUsers: { type: integer }
+        avgFeedbackRating: { type: number }
+    CategoryCount:
+      type: object
+      required: [category, count]
+      properties:
+        category: { $ref: "#/components/schemas/EventCategory" }
+        count: { type: integer }
+    TrendPoint:
+      type: object
+      required: [date, count]
+      properties:
+        date: { type: string }
+        count: { type: integer }
+    TopEvent:
+      type: object
+      required: [eventId, title, registrationCount, attendanceRate]
+      properties:
+        eventId: { type: integer }
+        title: { type: string }
+        category: { $ref: "#/components/schemas/EventCategory" }
+        registrationCount: { type: integer }
+        attendanceRate: { type: number }
+    ActivityItem:
+      type: object
+      required: [type, message, timestamp]
+      properties:
+        type: { type: string, enum: [event_created, event_approved, event_rejected, registration, certificate, feedback] }
+        message: { type: string }
+        eventId: { type: integer, nullable: true }
+        timestamp: { type: string, format: date-time }
+    EventReport:
+      type: object
+      required: [event, registrationCount, attendedCount, absentCount, certificatesIssued, avgRating, feedbackCount]
+      properties:
+        event: { $ref: "#/components/schemas/Event" }
+        registrationCount: { type: integer }
+        attendedCount: { type: integer }
+        absentCount: { type: integer }
+        certificatesIssued: { type: integer }
+        avgRating: { type: number }
+        feedbackCount: { type: integer }

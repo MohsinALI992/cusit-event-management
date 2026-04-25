@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CUSIT Event Management"
+version = "1.0.0"
+id = "artifacts/cusit-events"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20453
+
+[services.development]
+run = "pnpm --filter @workspace/cusit-events run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cusit-events", "run", "build" ]
+publicDir = "artifacts/cusit-events/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20453"
+BASE_PATH = "/"
