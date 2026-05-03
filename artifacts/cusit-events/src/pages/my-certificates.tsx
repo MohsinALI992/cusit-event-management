@@ -76,7 +76,7 @@ export default function MyCertificates() {
                       Certificate of Participation
                     </h2>
                     <p className="text-muted-foreground uppercase tracking-widest text-sm mb-12">
-                      COMSATS University Islamabad, Sahiwal Campus
+                      CUSIT Peshawar
                     </p>
                     
                     <p className="text-xl text-foreground/80 italic mb-4">This is to certify that</p>

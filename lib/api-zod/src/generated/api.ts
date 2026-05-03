@@ -34,11 +34,17 @@ export const GetCurrentUserResponse = zod.object({
 });
 
 /**
- * @summary Login as a seeded user (demo)
+ * @summary Login as a seeded user (demo) or with email+password
  */
-export const LoginAsBody = zod.object({
-  userId: zod.number(),
-});
+export const LoginAsBody = zod.union([
+  zod.object({
+    userId: zod.number(),
+  }),
+  zod.object({
+    email: zod.string().email(),
+    password: zod.string(),
+  }),
+]);
 
 export const LoginAsResponse = zod.object({
   id: zod.number(),
@@ -54,6 +60,24 @@ export const LoginAsResponse = zod.object({
   department: zod.string().nullish(),
   registrationNumber: zod.string().nullish(),
   avatarUrl: zod.string().nullish(),
+});
+
+/**
+ * @summary Register a new user account
+ */
+export const RegisterBody = zod.object({
+  name: zod.string(),
+  email: zod.string().email(),
+  password: zod.string(),
+  role: zod.enum([
+    "student",
+    "faculty",
+    "coordinator",
+    "society_head",
+    "admin",
+  ]),
+  department: zod.string().optional(),
+  registrationNumber: zod.string().optional(),
 });
 
 /**

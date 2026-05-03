@@ -60,8 +60,26 @@ export interface User {
   avatarUrl?: string | null;
 }
 
-export interface LoginRequest {
-  userId: number;
+export type LoginRequest =
+  | {
+      userId: number;
+    }
+  | {
+      email: string;
+      password: string;
+    };
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  department?: string;
+  registrationNumber?: string;
+}
+
+export interface ErrorResponse {
+  error: string;
 }
 
 export interface Event {

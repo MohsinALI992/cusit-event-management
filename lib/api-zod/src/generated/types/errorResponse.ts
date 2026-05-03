@@ -6,11 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type LoginRequest =
-  | {
-      userId: number;
-    }
-  | {
-      email: string;
-      password: string;
-    };
+export interface ErrorResponse {
+  error: string;
+}

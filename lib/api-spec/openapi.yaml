@@ -46,7 +46,7 @@ paths:
     post:
       operationId: loginAs
       tags: [auth]
-      summary: Login as a seeded user (demo)
+      summary: Login as a seeded user (demo) or with email+password
       requestBody:
         required: true
         content:
@@ -58,6 +58,32 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Registered and logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
   /auth/logout:
     post:
       operationId: logout
@@ -443,10 +469,33 @@ components:
         avatarUrl: { type: string, nullable: true }
 
     LoginRequest:
+      oneOf:
+        - type: object
+          required: [userId]
+          properties:
+            userId: { type: integer }
+        - type: object
+          required: [email, password]
+          properties:
+            email: { type: string, format: email }
+            password: { type: string }
+
+    RegisterRequest:
       type: object
-      required: [userId]
+      required: [name, email, password, role]
       properties:
-        userId: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+        department: { type: string }
+        registrationNumber: { type: string }
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
 
     Event:
       type: object
