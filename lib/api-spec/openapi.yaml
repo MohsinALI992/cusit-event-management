@@ -84,6 +84,48 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Request a password reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForgotPasswordRequest" }
+      responses:
+        "200":
+          description: Reset token issued (shown in UI since no email server)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForgotPasswordResult" }
+        "404":
+          description: Email not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password using a valid token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
+      responses:
+        "200":
+          description: Password reset successfully, user logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
   /auth/logout:
     post:
       operationId: logout
@@ -490,6 +532,26 @@ components:
         role: { $ref: "#/components/schemas/UserRole" }
         department: { type: string }
         registrationNumber: { type: string }
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+
+    ForgotPasswordResult:
+      type: object
+      required: [message, token]
+      properties:
+        message: { type: string }
+        token: { type: string }
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string }
+        password: { type: string }
 
     ErrorResponse:
       type: object

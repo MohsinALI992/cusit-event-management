@@ -9,6 +9,7 @@ import { useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-cli
 
 // Pages
 import Login from "@/pages/login";
+import ResetPassword from "@/pages/reset-password";
 import Dashboard from "@/pages/dashboard";
 import EventsList from "@/pages/events/index";
 import NewEvent from "@/pages/events/new";
@@ -60,6 +61,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPassword} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/events" component={EventsList} />
       <ProtectedRoute path="/events/new" component={NewEvent} />

@@ -78,6 +78,20 @@ export interface RegisterRequest {
   registrationNumber?: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResult {
+  message: string;
+  token: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
 export interface ErrorResponse {
   error: string;
 }

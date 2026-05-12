@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, University, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -22,6 +23,7 @@ export default function Login() {
   const loginAs = useLoginAs();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -29,6 +31,11 @@ export default function Login() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
 
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
@@ -111,6 +118,29 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "Not found", description: data.error || "Email not found", variant: "destructive" });
+      } else {
+        setResetToken(data.token as string);
+      }
+    } catch {
+      toast({ title: "Network error", description: "Could not reach the server.", variant: "destructive" });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   const groupedUsers = users?.reduce((acc, user) => {
     const role = user.role;
     if (!acc[role]) acc[role] = [];
@@ -162,43 +192,105 @@ export default function Login() {
             </TabsList>
 
             <TabsContent value="login" className="mt-6">
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@cusit.edu.pk"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
+              {!forgotMode ? (
+                <form onSubmit={handleEmailLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="you@cusit.edu.pk"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
                   </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Password</Label>
+                      <button
+                        type="button"
+                        onClick={() => { setForgotMode(true); setResetToken(null); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loginLoading}>
+                    {loginLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Sign In
+                  </Button>
+                </form>
+              ) : resetToken ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                    <p className="text-sm font-medium text-amber-800">Your reset token (valid 1 hour):</p>
+                    <code className="block break-all rounded bg-amber-100 p-3 text-xs font-mono text-amber-900 select-all">
+                      {resetToken}
+                    </code>
+                    <p className="text-xs text-amber-700">
+                      In a production app this would be emailed to you. For now, copy this token and use it on the reset page.
+                    </p>
+                  </div>
+                  <Button className="w-full" onClick={() => setLocation(`/reset-password?token=${encodeURIComponent(resetToken)}`)}>
+                    Go to Reset Password page →
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotMode(false); setResetToken(null); setForgotEmail(""); }}
+                    className="w-full text-center text-sm text-muted-foreground hover:text-primary"
+                  >
+                    Back to Sign In
+                  </button>
                 </div>
-                <Button type="submit" className="w-full" disabled={loginLoading}>
-                  {loginLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Sign In
-                </Button>
-              </form>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-1">Forgot your password?</h3>
+                    <p className="text-sm text-muted-foreground">Enter your registered email and we'll generate a reset token for you.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="you@cusit.edu.pk"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={forgotLoading}>
+                    {forgotLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Get Reset Token
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotMode(false); setResetToken(null); }}
+                    className="w-full text-center text-sm text-muted-foreground hover:text-primary"
+                  >
+                    Back to Sign In
+                  </button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="register" className="mt-6">

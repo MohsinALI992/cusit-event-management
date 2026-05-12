@@ -81,6 +81,42 @@ export const RegisterBody = zod.object({
 });
 
 /**
+ * @summary Request a password reset token
+ */
+export const ForgotPasswordBody = zod.object({
+  email: zod.string().email(),
+});
+
+export const ForgotPasswordResponse = zod.object({
+  message: zod.string(),
+  token: zod.string(),
+});
+
+/**
+ * @summary Reset password using a valid token
+ */
+export const ResetPasswordBody = zod.object({
+  token: zod.string(),
+  password: zod.string(),
+});
+
+export const ResetPasswordResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  role: zod.enum([
+    "student",
+    "faculty",
+    "coordinator",
+    "society_head",
+    "admin",
+  ]),
+  department: zod.string().nullish(),
+  registrationNumber: zod.string().nullish(),
+  avatarUrl: zod.string().nullish(),
+});
+
+/**
  * @summary List all users
  */
 export const ListUsersQueryParams = zod.object({
