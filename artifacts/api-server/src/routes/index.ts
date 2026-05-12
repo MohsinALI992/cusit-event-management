@@ -9,6 +9,8 @@ import certificatesRouter from "./certificates";
 import notificationsRouter from "./notifications";
 import feedbackRouter from "./feedback";
 import reportsRouter from "./reports";
+import openaiRouter from "./openai";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use(certificatesRouter);
 router.use(notificationsRouter);
 router.use(feedbackRouter);
 router.use(reportsRouter);
+router.use(openaiRouter);
+router.use(aiRouter);
 
 export default router;

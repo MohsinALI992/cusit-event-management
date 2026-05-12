@@ -296,6 +296,50 @@ export interface ActivityItem {
   timestamp: string;
 }
 
+export interface OpenaiConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface OpenaiConversationInput {
+  title: string;
+}
+
+export interface OpenaiMessage {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface OpenaiMessageInput {
+  content: string;
+}
+
+export type EventRecommendationsRecommendationsItem = {
+  eventId: number;
+  title: string;
+  reason: string;
+  matchScore: number;
+};
+
+export interface EventRecommendations {
+  recommendations: EventRecommendationsRecommendationsItem[];
+  reasoning: string;
+}
+
+export interface GenerateDescriptionRequest {
+  title: string;
+  category: string;
+  venue?: string;
+}
+
+export interface GenerateDescriptionResult {
+  description: string;
+}
+
 export interface EventReport {
   event: Event;
   registrationCount: number;

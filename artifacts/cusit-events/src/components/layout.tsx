@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { AiChat } from "@/components/ai-chat";
 import { 
   useGetCurrentUser, 
   useLogout, 
@@ -149,6 +150,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+      <AiChat />
     </SidebarProvider>
   );
 }

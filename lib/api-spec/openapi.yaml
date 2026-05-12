@@ -18,6 +18,8 @@ tags:
   - name: notifications
   - name: feedback
   - name: reports
+  - name: openai
+  - name: ai
 paths:
   /healthz:
     get:
@@ -149,6 +151,104 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/User" }
+
+  /openai/conversations:
+    get:
+      operationId: listOpenaiConversations
+      tags: [openai]
+      summary: List conversations for current user
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OpenaiConversation" }
+    post:
+      operationId: createOpenaiConversation
+      tags: [openai]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OpenaiConversationInput" }
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpenaiConversation" }
+  /openai/conversations/{id}/messages:
+    get:
+      operationId: listOpenaiMessages
+      tags: [openai]
+      summary: List messages in a conversation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OpenaiMessage" }
+    post:
+      operationId: sendOpenaiMessage
+      tags: [openai]
+      summary: Send a message and stream response (SSE)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OpenaiMessageInput" }
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream: {}
+  /openai/conversations/{id}:
+    delete:
+      operationId: deleteOpenaiConversation
+      tags: [openai]
+      summary: Delete a conversation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "204": { description: Deleted }
+
+  /ai/recommend-events:
+    post:
+      operationId: recommendEvents
+      tags: [ai]
+      summary: Get AI-powered personalized event recommendations for the current user
+      responses:
+        "200":
+          description: Recommendations
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventRecommendations" }
+
+  /ai/generate-description:
+    post:
+      operationId: generateEventDescription
+      tags: [ai]
+      summary: Generate an AI event description from title, category, and venue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GenerateDescriptionRequest" }
+      responses:
+        "200":
+          description: Generated description
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GenerateDescriptionResult" }
 
   /events:
     get:
@@ -758,6 +858,63 @@ components:
         message: { type: string }
         eventId: { type: integer, nullable: true }
         timestamp: { type: string, format: date-time }
+    OpenaiConversation:
+      type: object
+      required: [id, title, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        createdAt: { type: string, format: date-time }
+    OpenaiConversationInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+    OpenaiMessage:
+      type: object
+      required: [id, conversationId, role, content, createdAt]
+      properties:
+        id: { type: integer }
+        conversationId: { type: integer }
+        role: { type: string }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+    OpenaiMessageInput:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string }
+
+    EventRecommendations:
+      type: object
+      required: [recommendations, reasoning]
+      properties:
+        recommendations:
+          type: array
+          items:
+            type: object
+            required: [eventId, title, reason, matchScore]
+            properties:
+              eventId: { type: integer }
+              title: { type: string }
+              reason: { type: string }
+              matchScore: { type: integer }
+        reasoning: { type: string }
+
+    GenerateDescriptionRequest:
+      type: object
+      required: [title, category]
+      properties:
+        title: { type: string }
+        category: { type: string }
+        venue: { type: string }
+
+    GenerateDescriptionResult:
+      type: object
+      required: [description]
+      properties:
+        description: { type: string }
+
     EventReport:
       type: object
       required: [event, registrationCount, attendedCount, absentCount, certificatesIssued, avgRating, feedbackCount]

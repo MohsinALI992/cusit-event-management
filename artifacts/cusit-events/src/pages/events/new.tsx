@@ -1,4 +1,4 @@
-import { useCreateEvent, getListEventsQueryKey } from "@workspace/api-client-react";
+import { useCreateEvent, useGenerateEventDescription, getListEventsQueryKey } from "@workspace/api-client-react";
 import { CreateEventBody } from "@workspace/api-zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Type, Info, Image as ImageIcon, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Type, Info, Image as ImageIcon, Users, Sparkles, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export default function NewEvent() {
   const { user } = useAuth();
@@ -20,6 +22,8 @@ export default function NewEvent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const createMutation = useCreateEvent();
+  const generateDesc = useGenerateEventDescription();
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(CreateEventBody),
@@ -40,7 +44,6 @@ export default function NewEvent() {
   }
 
   const onSubmit = (data: any) => {
-    // Format dates to ISO strings properly if needed, although native datetime-local should be close
     const payload = {
       ...data,
       startsAt: new Date(data.startsAt).toISOString(),
@@ -55,11 +58,33 @@ export default function NewEvent() {
           queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
           setLocation("/events");
         },
-        onError: (err) => {
+        onError: () => {
           toast({ title: "Error", description: "Failed to create event. Please check the form.", variant: "destructive" });
         }
       }
     );
+  };
+
+  const handleGenerateDescription = async () => {
+    const title = form.getValues("title");
+    const category = form.getValues("category");
+    const venue = form.getValues("venue");
+
+    if (!title || !category) {
+      toast({ title: "Missing info", description: "Please fill in the event title and category first.", variant: "destructive" });
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const result = await generateDesc.mutateAsync({ data: { title, category, venue: venue || undefined } });
+      form.setValue("description", result.description, { shouldValidate: true });
+      toast({ title: "Description generated!", description: "AI has written a description for your event. Feel free to edit it." });
+    } catch {
+      toast({ title: "Generation failed", description: "Could not generate description. Please try again.", variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   return (
@@ -71,8 +96,16 @@ export default function NewEvent() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Event Details</CardTitle>
-          <CardDescription>Provide comprehensive information to help students decide to register.</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Event Details</CardTitle>
+              <CardDescription>Provide comprehensive information to help students decide to register.</CardDescription>
+            </div>
+            <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+              <Sparkles className="h-3 w-3" />
+              AI-assisted
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -184,11 +217,28 @@ export default function NewEvent() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Info className="h-4 w-4" /> Description</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="flex items-center gap-2"><Info className="h-4 w-4" /> Description</FormLabel>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleGenerateDescription}
+                        disabled={aiGenerating}
+                        className="h-7 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+                      >
+                        {aiGenerating ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3" />
+                        )}
+                        {aiGenerating ? "Generating…" : "Generate with AI"}
+                      </Button>
+                    </div>
                     <FormControl>
                       <Textarea 
-                        placeholder="Detailed information about what attendees can expect..." 
-                        className="min-h-[120px]"
+                        placeholder="Detailed information about what attendees can expect, or click 'Generate with AI' above…" 
+                        className="min-h-[140px]"
                         {...field} 
                       />
                     </FormControl>

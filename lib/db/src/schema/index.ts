@@ -153,6 +153,9 @@ export const notificationsTable = pgTable("notifications", {
     .defaultNow(),
 });
 
+export * from "./conversations";
+export * from "./messages";
+
 export const passwordResetTokensTable = pgTable("password_reset_tokens", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")

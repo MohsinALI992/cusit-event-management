@@ -15,6 +15,7 @@ import {
   getListEventsQueryKey,
   getListMyNotificationsQueryKey,
 } from "@workspace/api-client-react";
+import { AiRecommendations } from "@/components/ai-recommendations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { format } from "date-fns";
@@ -256,6 +257,7 @@ export default function Dashboard() {
           </div>
           
           <div className="space-y-6">
+            <AiRecommendations />
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg"><Bell className="h-5 w-5" /> Recent Notifications</CardTitle>

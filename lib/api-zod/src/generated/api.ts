@@ -143,6 +143,89 @@ export const ListUsersResponseItem = zod.object({
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
 
 /**
+ * @summary List conversations for current user
+ */
+export const ListOpenaiConversationsResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListOpenaiConversationsResponse = zod.array(
+  ListOpenaiConversationsResponseItem,
+);
+
+/**
+ * @summary Create a new conversation
+ */
+export const CreateOpenaiConversationBody = zod.object({
+  title: zod.string(),
+});
+
+/**
+ * @summary List messages in a conversation
+ */
+export const ListOpenaiMessagesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListOpenaiMessagesResponseItem = zod.object({
+  id: zod.number(),
+  conversationId: zod.number(),
+  role: zod.string(),
+  content: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListOpenaiMessagesResponse = zod.array(
+  ListOpenaiMessagesResponseItem,
+);
+
+/**
+ * @summary Send a message and stream response (SSE)
+ */
+export const SendOpenaiMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SendOpenaiMessageBody = zod.object({
+  content: zod.string(),
+});
+
+/**
+ * @summary Delete a conversation
+ */
+export const DeleteOpenaiConversationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get AI-powered personalized event recommendations for the current user
+ */
+export const RecommendEventsResponse = zod.object({
+  recommendations: zod.array(
+    zod.object({
+      eventId: zod.number(),
+      title: zod.string(),
+      reason: zod.string(),
+      matchScore: zod.number(),
+    }),
+  ),
+  reasoning: zod.string(),
+});
+
+/**
+ * @summary Generate an AI event description from title, category, and venue
+ */
+export const GenerateEventDescriptionBody = zod.object({
+  title: zod.string(),
+  category: zod.string(),
+  venue: zod.string().optional(),
+});
+
+export const GenerateEventDescriptionResponse = zod.object({
+  description: zod.string(),
+});
+
+/**
  * @summary List events with filters
  */
 export const ListEventsQueryParams = zod.object({
