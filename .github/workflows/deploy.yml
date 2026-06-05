@@ -41,7 +41,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build Static Site
-        run: pnpm run build --emptyOutDir || pnpm run build
+        run: PORT=3000 pnpm run build --emptyOutDir || PORT=3000 pnpm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
